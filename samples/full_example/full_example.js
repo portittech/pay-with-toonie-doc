@@ -47,4 +47,14 @@ const failurePaymentCallback = (err) => {
     console.log('userError', err)
 }
 
-renderPayWithToonie(document.querySelector("#toonie-button"), { getPaymentData, failurePaymentCallback })
+const successPaymentCallback = (data) => {
+    console.log('Success!!', data)
+}
+
+const options = {
+    getPaymentData,
+    successPaymentCallback,
+    failurePaymentCallback,
+}
+// builds the UI for the form
+PayWithToonie.render(document.querySelector("#toonie-button"), options);

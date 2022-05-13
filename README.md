@@ -82,6 +82,11 @@ ENVIRONMENT_API_URL: `https://api.toonieglobal.com`
 
 ## JS SDK Integration
 
+The official repository can be found in this location:
+https://github.com/portittech/pay-with-toonie-js-sdk
+
+Packages can be found at this location: https://github.com/portittech/pay-with-toonie-js-sdk/packages/1420928
+
 Pay With Toonie JS SDK package url: https://link-to-npm-package-here)  
 Pay With Toonie JS SDK javascript component: https://link-to-npm-package-here/...js)  
 Pay With Toonie JS SDK css styles: https://link-to-npm-package-here/...css)
@@ -185,5 +190,15 @@ const failurePaymentCallback = (err) => {
     console.log('userError', err)
 }
 
-renderPayWithToonie(document.querySelector("#toonie-button"), { getPaymentData, failurePaymentCallback })
+const successPaymentCallback = (data) => {
+    console.log('Success!!', data)
+}
+
+const options = {
+    getPaymentData,
+    successPaymentCallback,
+    failurePaymentCallback,
+}
+// builds the UI for the form
+PayWithToonie.render(document.querySelector("#toonie-button"), options);
 ```
