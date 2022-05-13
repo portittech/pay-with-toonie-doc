@@ -10,7 +10,7 @@ const getPaymentData = async() => {
         },
         body: new URLSearchParams({
             "grant_type": "password",
-            "client_id": "toonie-client",
+            "client_id": "pay-with-toonie",
             "username": "customerusername",
             "password": "customerpassword",
         })
