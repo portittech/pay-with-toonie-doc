@@ -85,11 +85,12 @@ ENVIRONMENT_API_URL: `https://api.toonieglobal.com`
 The official repository can be found in this location:
 https://github.com/portittech/pay-with-toonie-js-sdk
 
-Packages can be found at this location: https://github.com/portittech/pay-with-toonie-js-sdk/packages/1420928
+Packages can be found at this location: https://www.npmjs.com/package/@portittech/pay-with-toonie
 
-Pay With Toonie JS SDK package url: https://link-to-npm-package-here)  
-Pay With Toonie JS SDK javascript component: https://link-to-npm-package-here/...js)  
-Pay With Toonie JS SDK css styles: https://link-to-npm-package-here/...css)
+
+- Pay With Toonie JS SDK [npm package url](https://www.npmjs.com/package/@portittech/pay-with-toonie)
+- Pay With Toonie JS SDK [component](https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.js)
+- Pay With Toonie JS SDK [CSS styles](https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.css)
 
 ### Steps
 1. Import pay-with-toonie script and css files using the CDN/Package above. You can modify styles using `classNames`
@@ -126,9 +127,9 @@ The Full Example can be found [here](/samples/full_example/)
 ```html
 <html>
     <head>
-        <link rel="stylesheet" href="https://path.to.build.script.css">
-        <script src="https://path.to.build.script.js"></script>
-        <script src="init.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.css">
+        <script src="https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.js"></script>
+        <script src="full_script.js"></script>
     </head>
 
     <body>
