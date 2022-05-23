@@ -51,10 +51,13 @@ const successPaymentCallback = (data) => {
     console.log('Success!!', data)
 }
 
+const baseUrl = "https://<ENVIRONMENT_API_URL>";
+
 const options = {
     getPaymentData,
     successPaymentCallback,
     failurePaymentCallback,
+    baseUrl                 // Optional Parameter for Testing environments
 }
 // builds the UI for the form
 PayWithToonie.render(document.querySelector("#toonie-button"), options);
