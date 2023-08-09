@@ -99,9 +99,12 @@ Packages can be found at this location: https://www.npmjs.com/package/@portittec
 
 
 `options` is an object with 3 parameters:
-* `getPaymentData` is an async function where the create payment session should be called (Authenticated), and should return `paymentShortReference`, `otp` and `paymentSessionID`
+* `getPaymentData` is an async function where the creation of the payment session should be called (Authenticated), and should return `paymentShortReference`, `otp` and `paymentSessionId`
+* `createCardPaymentIntent(paymentSessionId)` is an async function which should accept a `paymentSessionId` parameter, create the payment session and return a `clientSecret` and a `paymentIntentId` parameters
+* `approveCardPayment(paymentId)` is an async function which should accept a `paymentId` parameter and make a call to accept and confirm the payment, passing an `amount`, a `currency` and the `walletId` of the merchant who will receive the payment
 * `successPaymentCallback: (data) => void` - (optional)
 * `failurePaymentCallback: (error: Error) => void` - (optional)
+* `genericErrorCallback: (error: Error) => void` - (optional)
 
 
 ## Roadmap
@@ -142,50 +145,99 @@ The Full Example can be found [here](/samples/full_example/)
 
 `full_example.js`
 ```js
+const getTokenData = async () => {
+  // Auth to get token
+  // ATTENTION: MAKE SURE NOT TO INCLUDE THIS AUTHENTICATION SNIPPET IN YOUR CLIENTSIDE APPLICATION
+  // THIS HAS BEEN DONE FOR DEMONSTRATION PURPOSES ONLY!!!!
+  const tokenRes = await fetch(
+    "https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "password",
+        client_id: "pay-with-toonie",
+        username: "customerusername",
+        password: "customerpassword",
+      }),
+    }
+  );
+
+  return await tokenRes.json();
+}
+
 const getPaymentData = async() => {
-        
-    // Auth to get token
-    // ATTENTION: MAKE SURE NOT TO INCLUDE THIS AUTHENTICATION SNIPPET IN YOUR CLIENTSIDE APPLICATION
-    // THIS HAS BEEN DONE FOR DEMONSTRATION PURPOSES ONLY!!!!
-    const tokenRes = await fetch('https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-            "grant_type": "password",
-            "client_id": "pay-with-toonie",
-            "username": "customerusername",
-            "password": "customerpassword",
-        })
-    });
-
-    const tokenData = await tokenRes.json()
-
-        //Create payment intent
-    const res  = await fetch('https://<ENVIRONMENT_API_URL>/offers/v1/payments', {
-        method: 'POST',
-        headers: {
-            Authorization: ` Bearer ${tokenData.access_token}`,
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            "amount": "0.05",
-            "reason": "Test Payment 01",
-            "destinationWalletId": "<MERCHANTWALLETID>",
-            "transactionCurrency": "EUR"
-        })
+  const tokenData = await getTokenData();
+  
+  //Create payment intent
+  const res  = await fetch('https://<ENVIRONMENT_API_URL>/offers/v1/payments', {
+    method: 'POST',
+    headers: {
+        Authorization: ` Bearer ${tokenData.access_token}`,
+        "content-type": "application/json",
+    },
+    body: JSON.stringify({
+        "amount": "0.05",
+        "reason": "Test Payment 01",
+        "destinationWalletId": "<MERCHANTWALLETID>",
+        "transactionCurrency": "EUR"
     })
+  })
 
     const data = await res.json()
     
     // Data to be consumed by the SDK
     return { 
-        paymentSessionId: data.paymentSessionId,
-        otp: data.otp,
-        paymentShortReference: data.shortReference
-        }
-    };
+      paymentSessionId: data.paymentSessionId,
+      otp: data.otp,
+      paymentShortReference: data.shortReference
+    }
+};
+
+const createCardPaymentIntent = async (paymentSessionId) => {
+  const tokenData = await getTokenData();
+
+  const res = await fetch('https://<ENVIRONMENT_API_URL>/acquiring/v1/card/custom', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      "amount": "1.1",
+      "walletId": "<MERCHANTWALLETID>",
+      "currency": "EUR",
+      "paymentSessionId": paymentSessionId,
+      "reason": "Test Payment 01"
+    }),
+  });
+
+  const data = await res.json();
+
+  return {
+    "clientSecret": data.clientSecret,
+    "paymentId": data.paymentIntentId,
+  };
+}
+
+const approveCardPayment = async (paymentId) => {
+  const tokenData = await getTokenData();
+
+  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/card/${paymentId}/approve`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      "amount": "1.1",
+      "walletId": "<MERCHANTWALLETID>",
+      "currency": "EUR",
+    }),
+  });
+}
 
 const failurePaymentCallback = (err) => {
     console.log('userError', err)
@@ -195,13 +247,20 @@ const successPaymentCallback = (data) => {
     console.log('Success!!', data)
 }
 
+const genericErrorCallback = error => {
+  console.error("Error!!", error);
+};
+
 const baseUrl = "https://<ENVIRONMENT_API_URL>";
 
 const options = {
-    getPaymentData,
-    successPaymentCallback,
-    failurePaymentCallback,
-    baseUrl                 // Optional Parameter for Testing environments
+  getPaymentData,
+  successPaymentCallback,
+  failurePaymentCallback,
+  genericErrorCallback,
+  createCardPaymentIntent,
+  approveCardPayment,
+  baseUrl,                // Optional Parameter for Testing environments
 }
 // builds the UI for the form
 PayWithToonie.render(document.querySelector("#toonie-button"), options);
