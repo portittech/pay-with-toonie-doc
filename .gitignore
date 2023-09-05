@@ -1,0 +1,9 @@
+# IntelliJ related
+.idea
+*.iml
+*.ipr
+*.iws
+
+# Miscellaneous
+.DS_Store
+.vscode
