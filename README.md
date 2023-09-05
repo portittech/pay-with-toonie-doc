@@ -98,13 +98,22 @@ Packages can be found at this location: https://www.npmjs.com/package/@portittec
 3. Call the `renderPayWithToonie` method. ex. `renderPayWithToonie(document.querySelector("#my-example"), options)`
 
 
-`options` is an object with 3 parameters:
+`options` is an object with the following properties:
 * `getPaymentData` is an async function where the creation of the payment session should be called (Authenticated), and should return `paymentShortReference`, `otp` and `paymentSessionId`
 * `createCardPaymentIntent(paymentSessionId)` is an async function which should accept a `paymentSessionId` parameter, create the payment session and return a `clientSecret` and a `paymentIntentId` parameters
 * `approveCardPayment(paymentId)` is an async function which should accept a `paymentId` parameter and make a call to accept and confirm the payment, passing an `amount`, a `currency` and the `walletId` of the merchant who will receive the payment
+* `createStreamPaymentIntent` is an async function which creates a payment intent for a stream payment
+* `approveStreamPayment` is an async function which accepts a `paymentIntentStreamId` parameter and changes the status of the intent to `APPROVED`
+* `rejectStreamPayment` is an async function which accepts a `paymentIntentStreamId` parameter and changes the status of the intent to `REJECTED`
+* `fetchStreamPaymentIntent` is an async function which accepts a `paymentIntentStreamId` parameter and fetch information about a stream payment intent
+* `onModalClose: (error) => void` - (optional) callback to perform an action on the payment modal closure
 * `successPaymentCallback: (data) => void` - (optional)
 * `failurePaymentCallback: (error: Error) => void` - (optional)
 * `genericErrorCallback: (error: Error) => void` - (optional)
+* `baseUrl` - absolute path from which to start API endpoints
+* `renderPayWithToonieButton: boolean` - choose to render or not the Pay With Toonie Button
+* `renderStreamWithToonieButton: boolean` - choose to render or not the Stream With Toonie Button
+* `renderPayWithCardButton: boolean` - choose to render or not the Pay With Card Button
 
 
 ## Roadmap
@@ -168,6 +177,10 @@ const getTokenData = async () => {
   return await tokenRes.json();
 }
 
+/**
+ * PAYMENT CREATION
+ */
+
 const getPaymentData = async() => {
   const tokenData = await getTokenData();
   
@@ -195,6 +208,10 @@ const getPaymentData = async() => {
       paymentShortReference: data.shortReference
     }
 };
+
+/**
+ * PAYMENT BY CARD CALLBACKS
+ */
 
 const createCardPaymentIntent = async (paymentSessionId) => {
   const tokenData = await getTokenData();
@@ -239,29 +256,120 @@ const approveCardPayment = async (paymentId) => {
   });
 }
 
-const failurePaymentCallback = (err) => {
-    console.log('userError', err)
+/**
+ * STREAM WITH TOONIE CALLBACKS
+ */
+
+const createStreamPaymentIntent = async () => {
+  const tokenData = await getTokenData();
+
+  const res = await fetch('https://<ENVIRONMENT_API_URL>/acquiring/v1/stream', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      "amount": "1.12",
+      "currency": "EUR",
+      "walletId": "<MERCHANTWALLETID>",
+      "type": "Stream",
+    })
+  })
+
+  const data = await res.json()
+
+  return {
+    paymentIntentStreamId: data.paymentIntentStreamId,
+    amount: data.amount,
+    currency: data.currency,
+    walletId: data.walletId,
+    reason: data.reason,
+  }
+};
+
+const approveStreamPayment = async (paymentIntentStreamId) => {
+  const tokenData = await getTokenData();
+
+  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/approve/${paymentIntentStreamId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+  });
 }
+
+const rejectStreamPayment = async (paymentIntentStreamId) => {
+  const tokenData = await getTokenData();
+
+  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/reject/${paymentIntentStreamId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+  });
+}
+
+const fetchStreamPaymentIntent = async (paymentIntentStreamId) => {
+  const tokenData = await getTokenData();
+
+  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/${paymentIntentStreamId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    }
+  });
+}
+
+/**
+ * RESULT CALLBACKS
+ */
 
 const successPaymentCallback = (data) => {
     console.log('Success!!', data)
+}
+
+const failurePaymentCallback = (err) => {
+    console.error('userError', err)
 }
 
 const genericErrorCallback = error => {
   console.error("Error!!", error);
 };
 
+const onModalClose = possiblePaymentStatusInError => {
+  if (possiblePaymentStatusInError)
+    console.error(possiblePaymentStatusInError);
+};
+
 const baseUrl = "https://<ENVIRONMENT_API_URL>";
+
+// CHOOSE WHICH BUTTONS TO RENDER
+const renderPayWithToonieButton = true;
+const renderStreamWithToonieButton = true;
+const renderPayWithCardButton = true;
 
 const options = {
   getPaymentData,
+  createCardPaymentIntent,
+  approveCardPayment,
+  createStreamPaymentIntent,
+  approveStreamPayment,
+  rejectStreamPayment,
+  fetchStreamPaymentIntent,
   successPaymentCallback,
   failurePaymentCallback,
   genericErrorCallback,
-  createCardPaymentIntent,
-  approveCardPayment,
+  onModalClose,
   baseUrl,                // Optional Parameter for Testing environments
+  renderPayWithToonieButton,
+  renderStreamWithToonieButton,
+  renderPayWithCardButton,
 }
+
 // builds the UI for the form
 PayWithToonie.render(document.querySelector("#toonie-button"), options);
 ```
