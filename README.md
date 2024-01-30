@@ -7,49 +7,22 @@ In its current implementation the integration is composed of two different imple
 - **REST API**: Authenticated Serverside integration to initiate the Payment Session to be passed to the client-side application
 - **Vanilla JS SDK**: Client-side integration of the "Pay with Toonie Button" User Experience, able to handle QR generation, polling and communication with the payment API.
 
-![Pay With Toonie](imgs/sample_qr.jpg)  ![Pay With Toonie](imgs/sample_qr_success.jpg)
+![Payment Buttons](imgs/buttons-page.png)
 
-## The Flow
-```mermaid
-%%{ "useMaxWidth": false }%%
-sequenceDiagram
-    actor Customer
-    participant MerchantFE as Customer UI
-    participant MerchantBE as Customer API
-    participant ToonieSDK as PayWithToonie SDK
-    participant ToonieAPI as Toonie API
+![Pay With Toonie](imgs/sample_qr.jpg)  ![Pay With Toonie](imgs/sample_qr_success.jpg) 
 
-    MerchantFE ->> ToonieSDK : Calls Render UI with Callbacks
-    ToonieSDK ->> Customer : Displays the Button
-    Customer ->> ToonieSDK : Clicks on the Button
-    ToonieSDK ->> MerchantBE : Call getPaymentData() to invoke BE
-    MerchantBE ->> ToonieAPI : Authenticate + Create Payment Session
-    ToonieAPI ->> MerchantBE : PaymentSessionID + OTP + ShortRef
-    MerchantBE ->> ToonieSDK : PaymentSessionID + OTP + ShortRef
-    ToonieSDK ->> ToonieSDK : Display QR + ShortRef
-    loop Polling
-        ToonieSDK ->>+ ToonieAPI : Keeps monitoring for status changes
-    end
-    ToonieAPI ->>- ToonieSDK : Payment Status changed (Customer Success/Error)
-    ToonieSDK ->> MerchantFE : Detect change and invoke successPayment/failurePayment
-    MerchantFE ->> MerchantBE : Ask if Payment was successful via get PS (Authenticated)
-    MerchantBE ->> MerchantFE : Replies Success/Error 
-    MerchantFE ->> Customer : Displays Success Message on Web Browser
-
-```
 ## REST API Integration
 
 ### Authentication
-In order to initialize a new payment session, it is necessary to perform a very basic integration to Toonie's Authentication endpoint.
 
-
+In order to initialize a new payment session, it is necessary to perform a very basic integration to an Authentication endpoint.
 
 ```js
 // Auth to get token
-const tokenRes = await fetch('https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token', {
-    method: 'POST',
+const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token", {
+    method: "POST",
     headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "content-type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
         "grant_type": "password",
@@ -63,6 +36,48 @@ const tokenRes = await fetch('https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 In this first version of the integration, the only supported authentication method is `username/password`.
 
 >*Note: Authentication via a combination of `APIKey/APISecret` is currently being developed.*
+
+### Payment Session Initialization
+
+To complete the initialization of a new payment session you need to call the endpoint to create it, passing some parameters like an amount, a currency and a reason.
+You also need to pass it a success and an error url parameters.
+You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your url, it will be replaced in our system with the right value.
+
+```js
+// Create a payment session
+const createPaymentSession = async (amount, currency, reason) => {
+  const tokenData = await getTokenData();
+
+  const res = await fetch("https://<ENVIRONMENT_API_URL>/acquiring/v1/payment", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: amount ?? "1.23",
+      currency: currency ?? "EUR",
+      reason: reason ?? "Test Payment 01",
+      successUrl: "https://www.yourdomain.com/success?orderId={PAYMENT_SESSION_ID}",
+      errorUrl: "https://www.yourdomain.com/error?orderId={PAYMENT_SESSION_ID}",
+    }),
+  });
+
+  const data = await res.json();
+
+  // Data to be consumed by the SDK
+  return {
+    paymentSessionId: data.sessionId,
+    amount: data.amount,
+    currency: data.currency,
+    successUrl: data.successUrl,
+    errorUrl: data.errorUrl,
+    reason: data.reason,
+    otp: data.otp,
+    paymentShortReference: data.shortReference,
+  };
+};
+```
 
 ### Browsable API Specification
 You can find an interactive API Specification here below:
@@ -78,298 +93,3 @@ ENVIRONMENT_API_URL: _please get in touch with one of our representatives_
 #### **PROD**
 ENVIRONMENT_AUTH_URL: `https://auth.toonieglobal.com`  
 ENVIRONMENT_API_URL: `https://api.toonieglobal.com`
-
-
-## JS SDK Integration
-
-The official repository can be found in this location:
-https://github.com/portittech/pay-with-toonie-js-sdk
-
-Packages can be found at this location: https://www.npmjs.com/package/@portittech/pay-with-toonie
-
-
-- Pay With Toonie JS SDK [npm package url](https://www.npmjs.com/package/@portittech/pay-with-toonie)
-- Pay With Toonie JS SDK [component](https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.js)
-- Pay With Toonie JS SDK [CSS styles](https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.css)
-
-### Steps
-1. Import pay-with-toonie script and css files using the CDN/Package above. You can modify styles using `classNames`
-2. Add a place where the button should be shown. ex. `<div id='my-example'></div>`
-3. Call the `renderPayWithToonie` method. ex. `renderPayWithToonie(document.querySelector("#my-example"), options)`
-
-
-`options` is an object with the following properties:
-* `getPaymentData` is an async function where the creation of the payment session should be called (Authenticated), and should return `paymentShortReference`, `otp` and `paymentSessionId`
-* `createCardPaymentIntent(paymentSessionId)` is an async function which should accept a `paymentSessionId` parameter, create the payment session and return a `clientSecret` and a `paymentIntentId` parameters
-* `approveCardPayment(paymentId)` is an async function which should accept a `paymentId` parameter and make a call to accept and confirm the payment, passing an `amount`, a `currency` and the `walletId` of the merchant who will receive the payment
-* `createStreamPaymentIntent` is an async function which creates a payment intent for a stream payment
-* `approveStreamPayment` is an async function which accepts a `paymentIntentStreamId` parameter and changes the status of the intent to `APPROVED`
-* `rejectStreamPayment` is an async function which accepts a `paymentIntentStreamId` parameter and changes the status of the intent to `REJECTED`
-* `fetchStreamPaymentIntent` is an async function which accepts a `paymentIntentStreamId` parameter and fetch information about a stream payment intent
-* `onModalClose: (error) => void` - (optional) callback to perform an action on the payment modal closure
-* `successPaymentCallback: (data) => void` - (optional)
-* `failurePaymentCallback: (error: Error) => void` - (optional)
-* `genericErrorCallback: (error: Error) => void` - (optional)
-* `baseUrl` - absolute path from which to start API endpoints
-* `renderPayWithToonieButton: boolean` - choose to render or not the Pay With Toonie Button
-* `renderStreamWithToonieButton: boolean` - choose to render or not the Stream With Toonie Button
-* `renderPayWithCardButton: boolean` - choose to render or not the Pay With Card Button
-
-
-## Roadmap
-Here below some of the key aspects that have been insert in the product roadmap.
-
-- [x] MVP Release - QR Code Scan-to-pay
-- [ ] Short Reference Payment
-- [ ] APIKey/APISecret Authentication Method
-- [ ] Clientside-only JS Integration (No API Integration Required)
-- [ ] Component Templating
-- [ ] E-commerce platforms plugin/integration
-
-
-## Complete Self contained JS Snippet
-
-This snippet is performing what would normally be done serverside and clientside to just show a full implementation of the service.
-  
->**⚠️WARNING: NEVER perform any authentication towards Toonie's API on a Single Page Application or on any client-side app⚠️**
-
-The Full Example can be found [here](/samples/full_example/)
-
-`full_example.htm`
-```html
-<html>
-    <head>
-        <link rel="stylesheet" href="https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.css">
-        <script src="https://unpkg.com/@portittech/pay-with-toonie/dist/pay-with-toonie.dist.js"></script>
-        <script src="full_script.js"></script>
-    </head>
-
-    <body>
-        <div>
-            <div id="toonie-button"></div>
-        </div>
-    </body>
-</html>
-```
-
-`full_example.js`
-```js
-const getTokenData = async () => {
-  // Auth to get token
-  // ATTENTION: MAKE SURE NOT TO INCLUDE THIS AUTHENTICATION SNIPPET IN YOUR CLIENTSIDE APPLICATION
-  // THIS HAS BEEN DONE FOR DEMONSTRATION PURPOSES ONLY!!!!
-  const tokenRes = await fetch(
-    "https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        grant_type: "password",
-        client_id: "pay-with-toonie",
-        username: "customerusername",
-        password: "customerpassword",
-      }),
-    }
-  );
-
-  return await tokenRes.json();
-}
-
-/**
- * PAYMENT CREATION
- */
-
-const getPaymentData = async() => {
-  const tokenData = await getTokenData();
-  
-  //Create payment intent
-  const res  = await fetch('https://<ENVIRONMENT_API_URL>/offers/v1/payments', {
-    method: 'POST',
-    headers: {
-        Authorization: ` Bearer ${tokenData.access_token}`,
-        "content-type": "application/json",
-    },
-    body: JSON.stringify({
-        "amount": "0.05",
-        "reason": "Test Payment 01",
-        "destinationWalletId": "<MERCHANTWALLETID>",
-        "transactionCurrency": "EUR"
-    })
-  })
-
-    const data = await res.json()
-    
-    // Data to be consumed by the SDK
-    return { 
-      paymentSessionId: data.paymentSessionId,
-      otp: data.otp,
-      paymentShortReference: data.shortReference
-    }
-};
-
-/**
- * PAYMENT BY CARD CALLBACKS
- */
-
-const createCardPaymentIntent = async (paymentSessionId) => {
-  const tokenData = await getTokenData();
-
-  const res = await fetch('https://<ENVIRONMENT_API_URL>/acquiring/v1/card/custom', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      "amount": "1.1",
-      "walletId": "<MERCHANTWALLETID>",
-      "currency": "EUR",
-      "paymentSessionId": paymentSessionId,
-      "reason": "Test Payment 01"
-    }),
-  });
-
-  const data = await res.json();
-
-  return {
-    "clientSecret": data.clientSecret,
-    "paymentId": data.paymentIntentId,
-  };
-}
-
-const approveCardPayment = async (paymentId) => {
-  const tokenData = await getTokenData();
-
-  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/card/${paymentId}/approve`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      "amount": "1.1",
-      "walletId": "<MERCHANTWALLETID>",
-      "currency": "EUR",
-    }),
-  });
-}
-
-/**
- * STREAM WITH TOONIE CALLBACKS
- */
-
-const createStreamPaymentIntent = async () => {
-  const tokenData = await getTokenData();
-
-  const res = await fetch('https://<ENVIRONMENT_API_URL>/acquiring/v1/stream', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      "amount": "1.12",
-      "currency": "EUR",
-      "walletId": "<MERCHANTWALLETID>",
-      "type": "Stream",
-    })
-  })
-
-  const data = await res.json()
-
-  return {
-    paymentIntentStreamId: data.paymentIntentStreamId,
-    amount: data.amount,
-    currency: data.currency,
-    walletId: data.walletId,
-    reason: data.reason,
-  }
-};
-
-const approveStreamPayment = async (paymentIntentStreamId) => {
-  const tokenData = await getTokenData();
-
-  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/approve/${paymentIntentStreamId}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-  });
-}
-
-const rejectStreamPayment = async (paymentIntentStreamId) => {
-  const tokenData = await getTokenData();
-
-  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/reject/${paymentIntentStreamId}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-  });
-}
-
-const fetchStreamPaymentIntent = async (paymentIntentStreamId) => {
-  const tokenData = await getTokenData();
-
-  return await fetch(`https://<ENVIRONMENT_API_URL>/acquiring/v1/stream/${paymentIntentStreamId}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    }
-  });
-}
-
-/**
- * RESULT CALLBACKS
- */
-
-const successPaymentCallback = (data) => {
-    console.log('Success!!', data)
-}
-
-const failurePaymentCallback = (err) => {
-    console.error('userError', err)
-}
-
-const genericErrorCallback = error => {
-  console.error("Error!!", error);
-};
-
-const onModalClose = possiblePaymentStatusInError => {
-  if (possiblePaymentStatusInError)
-    console.error(possiblePaymentStatusInError);
-};
-
-const baseUrl = "https://<ENVIRONMENT_API_URL>";
-
-// CHOOSE WHICH BUTTONS TO RENDER
-const renderPayWithToonieButton = true;
-const renderStreamWithToonieButton = true;
-const renderPayWithCardButton = true;
-
-const options = {
-  getPaymentData,
-  createCardPaymentIntent,
-  approveCardPayment,
-  createStreamPaymentIntent,
-  approveStreamPayment,
-  rejectStreamPayment,
-  fetchStreamPaymentIntent,
-  successPaymentCallback,
-  failurePaymentCallback,
-  genericErrorCallback,
-  onModalClose,
-  baseUrl,                // Optional Parameter for Testing environments
-  renderPayWithToonieButton,
-  renderStreamWithToonieButton,
-  renderPayWithCardButton,
-}
-
-// builds the UI for the form
-PayWithToonie.render(document.querySelector("#toonie-button"), options);
-```
