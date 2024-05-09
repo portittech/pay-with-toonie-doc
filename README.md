@@ -94,7 +94,7 @@ const createPaymentSession = async (amount, currency, reason) => {
 ## 3. Customer Checkout Redirection
 Once obtained a Payment Session ID, you will just need to redirect your customer at the following URL:
 ```
-https://<CHECKOUT_API_URL>/?orderId={PAYMENT_SESSION_ID}
+https://<CHECKOUT_APP_URL>/?orderId={PAYMENT_SESSION_ID}
 ```
 
 Example:
@@ -115,7 +115,7 @@ Get in touch with us at: <support@toonieglobal.com>
 
 ## SDK Integration
 Do you have the right technical expertise and you would like to integrate and customise the experience within your website without making use of our Checkout platform?  
-Here you can find our [JavaScript SDK](https://github.com/portittech/pay-with-toonie-js-sdk) and its [Documentation](./SDK-INTEGRATION.md)!
+Here you can find our [JavaScript SDK](https://github.com/portittech/pay-with-toonie-js-sdk) and its [Documentation](SDK-INTEGRATION.md)!
 
 In case you would want to delve further and try a full implementation, you can check out our [examples folder](samples/full_example)!
 
@@ -128,4 +128,4 @@ You can find an interactive API Specification here below, generated straight fro
 ### **PROD**
 ENVIRONMENT_AUTH_URL: `https://auth.toonieglobal.com`  
 ENVIRONMENT_API_URL: `https://api.toonieglobal.com`  
-CHECKOUT_API_URL: `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`
+CHECKOUT_APP_URL: `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`
