@@ -52,8 +52,8 @@ You also need to pass a success and an error url parameters where the user will 
 
 >You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your URLs or query string: it will be replaced with the right value by our systems.
 >
-> e.g. `https://my.ecommerce.domain.com/payments/{PAYMENT_SESSION_ID}/ok` will be translated to 
-`https://my.ecommerce.com/payments/ABCDEFG/ok`
+> e.g. `https://myecommerce.com/payments/{PAYMENT_SESSION_ID}/ok` will be translated to 
+`https://myecommerce.com/payments/ABCDEFG/ok`
 
 
 ```js
