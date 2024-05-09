@@ -3,18 +3,17 @@
 ## Introduction
 This constitutes the official documentation of the "Pay with Toonie" online payments solution.
 
-In its current implementation the integration is composed of two different implementations, both required:
-- **REST API**: Authenticated Serverside integration to initiate the Payment Session to be passed to the client-side application
-- **Vanilla JS SDK**: Client-side integration of the "Pay with Toonie Button" User Experience, able to handle QR generation, polling and communication with the payment API.
+You can see and try a full implementation example using the file in [full_example](samples/full_example) folder
 
-![Payment Buttons](imgs/buttons-page.png)
-
-![Pay With Toonie](imgs/sample_qr.jpg)  ![Pay With Toonie](imgs/sample_qr_success.jpg) 
+<img src="imgs/buttons_page.png" alt="Image description">
+<img src="imgs/sample_qr.png" alt="Image description">
+<img src="imgs/sample_qr_success.png" alt="Image description">
 
 ## REST API Integration
 
 ### Authentication
 
+In its current implementation the integration requires an Authenticated Serverside integration to initiate the Payment Session to be passed to the client-side application.
 In order to initialize a new payment session, it is necessary to perform a very basic integration to an Authentication endpoint.
 
 ```js
@@ -26,7 +25,7 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
     },
     body: new URLSearchParams({
         "grant_type": "password",
-        "client_id": "pay-with-toonie",
+        "client_id": "paywithtoonie-client",
         "username": "customerusername",
         "password": "customerpassword",
     })
@@ -40,7 +39,9 @@ In this first version of the integration, the only supported authentication meth
 ### Payment Session Initialization
 
 To complete the initialization of a new payment session you need to call the endpoint to create it, passing some parameters like an amount, a currency and a reason.
-You also need to pass it a success and an error url parameters.
+
+You also need to pass a success and an error url parameters where the user will be sent after the payment.
+
 You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your url, it will be replaced in our system with the right value.
 
 ```js
@@ -55,13 +56,13 @@ const createPaymentSession = async (amount, currency, reason) => {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      amount: amount ?? "1.23",
-      currency: currency ?? "EUR",
-      reason: reason ?? "Test Payment 01",
-      successUrl: "https://www.yourdomain.com/success?orderId={PAYMENT_SESSION_ID}",
-      errorUrl: "https://www.yourdomain.com/error?orderId={PAYMENT_SESSION_ID}",
-    }),
-  });
+      "amount": amount,
+      "currency": currency,
+      "reason": reason,
+      "successUrl": "<SUCCESS_PAGE_URL>",
+      "errorUrl": "<ERROR_PAGE_URL>",
+    })
+  })
 
   const data = await res.json();
 
@@ -75,13 +76,14 @@ const createPaymentSession = async (amount, currency, reason) => {
     reason: data.reason,
     otp: data.otp,
     paymentShortReference: data.shortReference,
+    displayName: data.displayName,
   };
 };
 ```
 
 ### Browsable API Specification
 You can find an interactive API Specification here below:
-- [Pay With Toonie API](https://portitpaywithtoonie.docs.apiary.io)
+- [Pay With Toonie API](https://pwtdraft.docs.apiary.io/#)
 - _Wallets API - Public Documentation Coming Soon_
 
 ### Endpoints
