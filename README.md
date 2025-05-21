@@ -31,7 +31,7 @@ We provide two ways of authenticating against our services, depending on the sec
 > As already stated above, a token generated with the "Username and Password" integration **grants full access to your Toonie account, including withdraw and payment execution capabilities**.  
 > We suggest to implement the "OIDC Consent Flow" whenever possible and we reserve the right to discontinue this feature in the future in the interest of our customers.
 
-### OIDC Consent Flow - Third Party App 
+### 1.a (Preferred) - OIDC Consent Flow - Third Party App
 
 With the OIDC Consent Flow the objective is to allow the merchant to authorise an External App to create Payment Requests on their behalf.
 
@@ -59,11 +59,9 @@ sequenceDiagram
 
     Note over App,Toonie: Create new Payment Request
     App -->> Toonie : POST /acquiring/v1/payment/paymentSessions
-
 ```
 
 Once granted consent, the Third-party App is asked to only handle refresh and access tokens, without any further merchant interaction.
-
 
 Here is an example on how to obtain them via the `code` that is received as part of the QueryString parameters received at the Redirect URI location/endpoint.
 
@@ -77,6 +75,7 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
     body: new URLSearchParams({
         "grant_type": "authorization_code",
         "client_id": "<ENVIRONMENT_CLIENT_ID>",
+        "client_secret": "<ENVIRONMENT_CLIENT_SECRET>", // OPTIONAL
         "code": "{code from querystring parameters}"
     })
 });
@@ -84,9 +83,10 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 
 This will return an Access Token that will have to be added to the Payment Session Creation request headers and a refresh token that will be used on Access Token expiry to obtain a new valid one.
 
-### Username and Password Flow
+### 1.b Username and Password Flow
 
-> **Security Notice**: This method grants full access to the merchant account. It should only be used in trusted, secure environments. When possible, prefer the OIDC Consent Flow.
+> [!ERROR]This method grants full access to the merchant account. It should only be used in trusted, secure environments.
+> Whenever possible, prefer the OIDC Consent Flow.
 
 
 ```mermaid
@@ -258,18 +258,20 @@ You can find an interactive API Specification here below, generated straight fro
 ### PROD
 
 
-| Environment Variable       | Value                                                             |
-|----------------------------|-------------------------------------------------------------------|
-| `ENVIRONMENT_AUTH_URL`     | `https://auth.toonieglobal.com`                                  |
-| `ENVIRONMENT_API_URL`      | `https://api.toonieglobal.com`                                   |
-| `CHECKOUT_APP_URL`         | `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`     |
+| Environment Variable       | Value                                                                   |
+|----------------------------|-------------------------------------------------------------------------|
+| `ENVIRONMENT_AUTH_URL`     | `https://auth.toonieglobal.com`                                         |
+| `ENVIRONMENT_API_URL`      | `https://api.toonieglobal.com`                                          |
+| `CHECKOUT_APP_URL`         | `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`            |
+| `ENVIRONMENT_CLIENT_ID`    | `paywithtoonie-ext-client` or assigned by your integration manager      |
+| `ENVIRONMENT_CLIENT_SECRET`| Optional or assigned by your integration manager      |
 
 
 ## QA section
 
-### 1 Can I return all the payment sessions?
+### 1. Can I get all the PaymentSessions?
 
-Yes, you can. To check the status of a payment, you can call the following endpoint, where you can list all the payment sessions created by your merchant account.
+Yes, you can. To check the status of all your payments, you can call the following endpoint, where you can list all the payment sessions created by your merchant account.
 
 ```js
 
