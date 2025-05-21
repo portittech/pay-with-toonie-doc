@@ -18,7 +18,7 @@ The Checkout Experience will allow you to acquire payments in just four steps:
 1. Authentication
 2. Payment Session Creation
 3. Customer Checkout Redirection
-4. Validate Payment 
+4. Validate Payment Status
 
 
 ## 1. Authentication
@@ -209,7 +209,9 @@ https://pay.toonieglobal.com/?orderId=ABCDEFG
 
 The Toonie Checkout experience will then guide your customer to payment completion, redirecting them back to the specified success/failure URLs accordingly at the end of the process.
 
-## 4. How to validate a payment status
+## 4. Validate Payment Status
+
+Although your system has received a callback to the success callback you configured, you should always validate the status of the payment session.
 
 To validate the payment status you can call the endpoint to retrieve the payment session. 
 It return a single payment based on its ID:
