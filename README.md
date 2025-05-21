@@ -18,6 +18,7 @@ The Checkout Experience will allow you to acquire payments in just three steps:
 1. Authentication
 2. Payment Session Creation
 3. Customer Checkout Redirection
+4. How to validate a payment status
 
 
 ## 1. Authentication
