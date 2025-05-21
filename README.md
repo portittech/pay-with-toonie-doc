@@ -85,7 +85,8 @@ This will return an Access Token that will have to be added to the Payment Sessi
 
 ### 1.b Username and Password Flow
 
-> [!ERROR]This method grants full access to the merchant account. It should only be used in trusted, secure environments.
+> [!CAUTION]
+> This method grants full access to the merchant account. It should only be used in trusted, secure environments.
 > Whenever possible, prefer the OIDC Consent Flow.
 
 
