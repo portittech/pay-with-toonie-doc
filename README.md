@@ -24,7 +24,7 @@ The Checkout Experience will allow you to acquire payments in just three steps:
 
 In order to communicate with the API, it is necessary to perform first:
 
-Go to [Toonie Developer Portal](WE NEED SOME URL HERE) and generate your token, after that the next step is login to the API.:
+Go to [Toonie Developer Portal](WE NEED SOME URL HERE) and generate your token, after that the next step is login to the API:
 
 ![Pay With Toonie](imgs/toonie-pay-login.png)
 
