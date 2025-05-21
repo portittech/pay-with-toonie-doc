@@ -112,7 +112,7 @@ https://pay.toonieglobal.com/?orderId=ABCDEFG
 
 The Toonie Checkout experience will then guide your customer to payment completion, redirecting them back to the specified success/failure URLs accordingly at the end of the process.
 
-## 4. how to validate a payment status
+## 4. How to validate a payment status
 
 To check the status of a payment, you can call the following endpoint, where you can list all the payment sessions created by your merchant account.
 
