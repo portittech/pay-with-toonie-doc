@@ -61,9 +61,26 @@ sequenceDiagram
     App -->> Toonie : POST /acquiring/v1/payment/paymentSessions
 ```
 
-Once granted consent, the Third-party App is asked to only handle refresh and access tokens, without any further merchant interaction.
+In order to initiate the procedure, as highlighted in the diagram by point 2, the Third-party App has to be granted consent to operate on behalf of the merchant.
+In order to kick off the flow, it has to redirect the merchant to the captive portal managed by Toonie Auth at this URL:
+```
+https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/auth?client_id=<ENVIRONMENT_CLIENT_ID>&response_type=code&redirect_uri={app_redirect_url}
+```
+Once there, the merchant will be presented with two screens in sequence, asking to Login and then confirmation to grant access to the third party platform:  
+  
+![Consent](imgs/consent.png)
 
-Here is an example on how to obtain them via the `code` that is received as part of the QueryString parameters received at the Redirect URI location/endpoint.
+The merchant will then be redirected to the `redirect_uri` at which Third-party App should capture `code` from the querystring paramters.
+Assuming a `redirect_uri = 'https://www.portit.io/consent_callback'` here's where the merchant browser will be redirected on successful authorization:
+```
+https://www.portit.io/consent_callback/?session_state=e7a5a0b4-c8f2-4928-bab4-c165d873d7fa&code=78ee2b17-e1fb-499e-95df-843a460e599c.e7a5a0b4-c8f2-4928-bab4-c165d873d7fa.49a2bed4-af11-4e07-b0bf-7528eb9d4440
+```
+and to something similar to the following in case of consent denied:
+```
+https://www.portit.io/consent_callback/?error=access_denied&zx=1747845871743&no_sw_cr=1
+```
+
+Here is an example on how to obtain the tokens pair via the `code` that is received as part of the QueryString parameters received at the Redirect URI location/endpoint.
 
 ```js
 // Auth to get token
@@ -83,11 +100,17 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 
 This will return an Access Token that will have to be added to the Payment Session Creation request headers and a refresh token that will be used on Access Token expiry to obtain a new valid one.
 
+> [!NOTICE]
+> When granted consent, the Third-party App should be able to fully function by just handling refresh and access tokens, without any further merchant interaction.
+
+
 ### 1.b Username and Password Flow
 
 > [!CAUTION]
 > This method grants full access to the merchant account. It should only be used in trusted, secure environments.
 > Whenever possible, prefer the OIDC Consent Flow.
+
+The Username and Password Flow will use the standard OAuth2.0 password flow to obtain the tokens pair.
 
 
 ```mermaid
@@ -122,7 +145,7 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 });
 ```
 
-This will return an Access Token with full access in your account.
+This will return an Access Token with **full access in your account**.
 
 ## 2. Payment Session Creation
 
