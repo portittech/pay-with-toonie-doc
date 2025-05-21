@@ -13,24 +13,59 @@ In its current implementation the integration requires just few minutes to go fr
 
 The current flow relies on just one simple API call to setup your payment request and will take care of your customer experience until the payment is completed!
 
-The Checkout Experience will allow you to acquire payments in just three steps:
+The Checkout Experience will allow you to acquire payments in just four steps:
 
 1. Authentication
 2. Payment Session Creation
 3. Customer Checkout Redirection
-4. How to validate a payment status
+4. Validate Payment 
 
 
 ## 1. Authentication
 
-In order to communicate with the API, it is necessary to perform first:
+We provide two ways of authenticating against our services, depending on the security constraints your platform offers:
+- OIDC Consent Flow - Authorise a platform to create payment sessions on your behalf and limit the authorization capabilities only to managing Payment Sessions
+- Username and Password - If you are in full control of your credentials/secrets and want to provide your integration global access to your Toonie account
 
-Go to [Toonie Developer Portal](WE NEED SOME URL HERE) and generate your token, after that the next step is login to the API:
+> [!WARNING]  
+> As already stated above, a token generated with the "Username and Password" integration **grants full access to your Toonie account, including withdraw and payment execution capabilities**.  
+> We suggest to implement the "OIDC Consent Flow" whenever possible and we reserve the right to discontinue this feature in the future in the interest of our customers.
 
-![Pay With Toonie](imgs/toonie-pay-login.png)
+### OIDC Consent Flow - Third Party App 
 
-It will generate a token and code that you will need to use in the next step.
+With the OIDC Consent Flow the objective is to allow the merchant to authorise an External App to create Payment Requests on their behalf.
 
+Here below a sample authentication flow.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Customer as Merchant
+    participant Keycloak as Toonie Auth
+    participant App as Third-party App
+    participant Toonie as Toonie
+
+    Customer->>App: Clicks "Grant consent to <Third-party App> with Toonie”
+    App->>Keycloak: Redirect to https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/auth<br/>?client_id={client}&response_type=code<br/>&redirect_uri={app_redirect}
+    Keycloak->>Customer: Show login page
+    Customer->>Keycloak: POST credentials
+    Keycloak->>Customer: Consent screen
+    Customer->>Keycloak: Grant consent
+    Keycloak-->>App: 302 Redirect to {app_redirect}?code={auth_code}
+
+    Note over App,Keycloak: Exchange code for tokens
+    App->>Keycloak: POST /auth/realms/toonie/protocol/openid-connect/token<br/>grant_type=authorization_code<br/>code={auth_code}<br/>redirect_uri={app_redirect}<br/>client_id={client}<br/>(opt) client_secret={secret}
+    Keycloak-->>App: { access_token, id_token, refresh_token, token_type, expires_in }
+
+    Note over App,Toonie: Create new Payment Request
+    App -->> Toonie : POST /acquiring/v1/payment/paymentSessions
+
+```
+
+Once granted consent, the Third-party App is asked to only handle refresh and access tokens, without any further merchant interaction.
+
+
+Here is an example on how to obtain them via the `code` that is received as part of the QueryString parameters received at the Redirect URI location/endpoint.
 
 ```js
 // Auth to get token
@@ -41,15 +76,33 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
     },
     body: new URLSearchParams({
         "grant_type": "authorization_code",
-        "client_id": "paywithtoonie-client",
-        "code": "<CODE>"
+        "client_id": "<ENVIRONMENT_CLIENT_ID>",
+        "code": "{code from querystring parameters}"
     })
 });
 ```
 
->*Note: Authentication via a combination of `APIKey/APISecret` and via `Developer Tokens` currently being developed.*
+This will return an Access Token that will have to be added to the Payment Session Creation request headers and a refresh token that will be used on Access Token expiry to obtain a new valid one.
 
-This will return an Authentication Token that will have to be added to the Payment Session Creation request.
+### Username and Password Flow
+
+TODO: add intro
+
+```js
+// Auth to get token
+const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token", {
+    method: "POST",
+    headers: {
+        "content-type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+        "grant_type": "password",
+        "client_id": "<ENVIRONMENT_CLIENT_ID>",
+        "username": "<MERCHANT_USERNAME>",
+        "password": "<MERCHANT_PASSWORD>",
+    })
+});
+```
 
 ## 2. Payment Session Creation
 
