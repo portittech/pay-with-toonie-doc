@@ -86,7 +86,22 @@ This will return an Access Token that will have to be added to the Payment Sessi
 
 ### Username and Password Flow
 
-TODO: add intro
+> **Security Notice**: This method grants full access to the merchant account. It should only be used in trusted, secure environments. When possible, prefer the OIDC Consent Flow.
+
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Merchant App
+    participant Keycloak as Toonie Auth
+    participant Toonie as Toonie
+
+    App->>Keycloak: POST /auth/realms/toonie/protocol/openid-connect/token<br/>grant_type=password<br/>client_id={client}<br/>username={merchant_username}<br/>password={merchant_password}
+    Keycloak-->>App: { access_token, refresh_token, token_type, expires_in }
+
+    Note over App,Toonie: Create new Payment Request
+    App-->>Toonie: POST /acquiring/v1/payment/paymentSessions
+ ```
 
 ```js
 // Auth to get token
