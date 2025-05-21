@@ -103,6 +103,8 @@ sequenceDiagram
     App-->>Toonie: POST /acquiring/v1/payment/paymentSessions
  ```
 
+The code below shows how to obtain the access token using the username and password flow.
+
 ```js
 // Auth to get token
 const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/token", {
@@ -118,6 +120,8 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
     })
 });
 ```
+
+This will return an Access Token with full access in your account.
 
 ## 2. Payment Session Creation
 
