@@ -168,53 +168,8 @@ The Toonie Checkout experience will then guide your customer to payment completi
 
 ## 4. How to validate a payment status
 
-To check the status of a payment, you can call the following endpoint, where you can list all the payment sessions created by your merchant account.
-
-```js
-
-const listPaymentSessions = async () => {
-  const tokenData = await getTokenData(); // Reuse token logic from the authentication step
-
-  const res = await fetch("https://<ENVIRONMENT_API_URL>/acquiring/v1/payment/paymentSessions", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "content-type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to list payment sessions");
-  }
-
-  const data = await res.json();
-
-  return data.payments.map((session) => ({
-      paymentSessionId: data.sessionId,
-      status: data.status,
-      amount: data.amount,
-      currency: data.currency,
-      reason: data.reason,
-      successUrl: data.successUrl,
-      errorUrl: data.errorUrl,
-      merchantDisplayName: data.displayName,
-      providers: data.selectedProviders,
-      createdAt: data.created,
-      lastUpdated: data.last_updated
-  }));
-};
-```
-This returns a list of all the payment sessions created by your merchant account, where you can filter and define the order to show them.
-
-| Parameter                | Description                                                                                              |
-|--------------------------|----------------------------------------------------------------------------------------------------------|
-| `status`                 | Optional filter to list only sessions matching a specific status (e.g., `INITIATED`, `SUCCEEDED`, `CREATED`). |
-| `page`                   | Page index for pagination (e.g., `0`, `1`, `2`, ...).                                                    |
-| `size`                   | Number of results per page.                                                                             |
-| `order`                  | Field name used for sorting results (e.g., `creationDate`, `status`, `amount`).                         |
-| `orderType`              | Sorting direction: must be one of `asc` (default) or `desc`.                                            |
-
-If you wish, you can also return a single payment based on its ID:
+To validate the payment status you can call the endpoint to retrieve the payment session. 
+It return a single payment based on its ID:
 
 ```javascript
 const getPaymentSession = async (sessionId) => {
@@ -289,3 +244,54 @@ You can find an interactive API Specification here below, generated straight fro
 | `ENVIRONMENT_AUTH_URL`     | `https://auth.toonieglobal.com`                                  |
 | `ENVIRONMENT_API_URL`      | `https://api.toonieglobal.com`                                   |
 | `CHECKOUT_APP_URL`         | `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`     |
+
+
+## QA section
+
+### 1 Can I return all the payment sessions?
+
+Yes, you can. To check the status of a payment, you can call the following endpoint, where you can list all the payment sessions created by your merchant account.
+
+```js
+
+const listPaymentSessions = async () => {
+  const tokenData = await getTokenData(); // Reuse token logic from the authentication step
+
+  const res = await fetch("https://<ENVIRONMENT_API_URL>/acquiring/v1/payment/paymentSessions", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      "content-type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to list payment sessions");
+  }
+
+  const data = await res.json();
+
+  return data.payments.map((session) => ({
+      paymentSessionId: data.sessionId,
+      status: data.status,
+      amount: data.amount,
+      currency: data.currency,
+      reason: data.reason,
+      successUrl: data.successUrl,
+      errorUrl: data.errorUrl,
+      merchantDisplayName: data.displayName,
+      providers: data.selectedProviders,
+      createdAt: data.created,
+      lastUpdated: data.last_updated
+  }));
+};
+```
+This returns a list of all the payment sessions created by your merchant account, where you can filter and define the order to show them.
+
+| Parameter                | Description                                                                                              |
+|--------------------------|----------------------------------------------------------------------------------------------------------|
+| `status`                 | Optional filter to list only sessions matching a specific status (e.g., `INITIATED`, `SUCCEEDED`, `CREATED`). |
+| `page`                   | Page index for pagination (e.g., `0`, `1`, `2`, ...).                                                    |
+| `size`                   | Number of results per page.                                                                             |
+| `order`                  | Field name used for sorting results (e.g., `creationDate`, `status`, `amount`).                         |
+| `orderType`              | Sorting direction: must be one of `asc` (default) or `desc`.                                            |
