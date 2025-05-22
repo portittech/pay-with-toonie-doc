@@ -100,7 +100,7 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 
 This will return an Access Token that will have to be added to the Payment Session Creation request headers and a refresh token that will be used on Access Token expiry to obtain a new valid one.
 
-> [!NOTICE]
+> [!NOTE]
 > When granted consent, the Third-party App should be able to fully function by just handling refresh and access tokens, without any further merchant interaction.
 
 
