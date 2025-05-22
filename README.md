@@ -249,7 +249,6 @@ const getPaymentSession = async (sessionId) => {
   };
 };
 ```
-
 At the payment session you can check the status of the payment, the amount, the currency and the reason.
 
 Check the status, if the status is `COMPLETED` you can consider the payment as successful.
