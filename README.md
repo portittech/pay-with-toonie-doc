@@ -11,7 +11,7 @@ This guide will allow you to integrate your stores and ecommerces with Toonie's 
 
 In its current implementation the integration requires just few minutes to go from 0 to fully integrated to Toonie and start receiving your first payment.
 
-The current flow relies on just one simple API call to setup your payment request and will take care of your customer experience until the payment is completed!
+The current flow relies on just one simple API call to set up your payment request and will take care of your customer experience until the payment is completed!
 
 The Checkout Experience will allow you to acquire payments in just four steps:
 
@@ -29,7 +29,7 @@ We provide two ways of authenticating against our services, depending on the sec
 
 > [!WARNING]  
 > As already stated above, a token generated with the "Username and Password" integration **grants full access to your Toonie account, including withdraw and payment execution capabilities**.  
-> We suggest to implement the "OIDC Consent Flow" whenever possible and we reserve the right to discontinue this feature in the future in the interest of our customers.
+> We suggest to implement the "OIDC Consent Flow" whenever possible, and we reserve the right to discontinue this feature in the future in the interest of our customers.
 
 ### 1.a (Preferred) - OIDC Consent Flow - Third Party App
 
@@ -66,11 +66,11 @@ In order to kick off the flow, it has to redirect the merchant to the captive po
 ```
 https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/protocol/openid-connect/auth?client_id=<ENVIRONMENT_CLIENT_ID>&response_type=code&redirect_uri={app_redirect_url}
 ```
-Once there, the merchant will be presented with two screens in sequence, asking to Login and then confirmation to grant access to the third party platform:  
+Once there, the merchant will be presented with two screens in sequence, asking to log in and then confirmation to grant access to the third party platform:  
   
 ![Consent](imgs/consent.png)
 
-The merchant will then be redirected to the `redirect_uri` at which Third-party App should capture `code` from the querystring paramters.
+The merchant will then be redirected to the `redirect_uri` at which Third-party App should capture `code` from the querystring parameters.
 Assuming a `redirect_uri = 'https://www.portit.io/consent_callback'` here's where the merchant browser will be redirected on successful authorization:
 ```
 https://www.portit.io/consent_callback/?session_state=e7a5a0b4-c8f2-4928-bab4-c165d873d7fa&code=78ee2b17-e1fb-499e-95df-843a460e599c.e7a5a0b4-c8f2-4928-bab4-c165d873d7fa.49a2bed4-af11-4e07-b0bf-7528eb9d4440
@@ -100,7 +100,7 @@ const tokenRes = await fetch("https://<ENVIRONMENT_AUTH_URL>/auth/realms/toonie/
 
 This will return an Access Token that will have to be added to the Payment Session Creation request headers and a refresh token that will be used on Access Token expiry to obtain a new valid one.
 
-> [!NOTICE]
+> [!NOTE]
 > When granted consent, the Third-party App should be able to fully function by just handling refresh and access tokens, without any further merchant interaction.
 
 
@@ -153,7 +153,7 @@ To complete the initialization of a new payment session you need to call the end
 
 You also need to pass a success and an error url parameters where the user will be sent after the payment.
 
-
+> [!TIP]
 > You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your URLs or query string: it will be replaced with the right value by our systems.
 >
 > e.g. `https://myecommerce.com/payments/{PAYMENT_SESSION_ID}/ok` will be translated to `https://myecommerce.com/payments/ABCDEFG/ok`
@@ -214,7 +214,7 @@ The Toonie Checkout experience will then guide your customer to payment completi
 Although your system has received a callback to the success callback you configured, you should always validate the status of the payment session.
 
 To validate the payment status you can call the endpoint to retrieve the payment session. 
-It return a single payment based on its ID:
+It returns a single payment based on its ID:
 
 ```javascript
 const getPaymentSession = async (sessionId) => {
@@ -269,7 +269,7 @@ Get in touch with us at: <support@toonieglobal.com>
 
 
 ## SDK Integration
-Do you have the right technical expertise and you would like to integrate and customise the experience within your website without making use of our Checkout platform?  
+Do you have the right technical expertise, and you would like to integrate and customise the experience within your website without making use of our Checkout platform?  
 Here you can find our [JavaScript SDK](https://github.com/portittech/pay-with-toonie-js-sdk) and its [Documentation](SDK-INTEGRATION.md)!
 
 In case you would want to delve further and try a full implementation, you can check out our [examples folder](samples/full_example)!
@@ -283,13 +283,13 @@ You can find an interactive API Specification here below, generated straight fro
 ### PROD
 
 
-| Environment Variable       | Value                                                                   |
-|----------------------------|-------------------------------------------------------------------------|
-| `ENVIRONMENT_AUTH_URL`     | `https://auth.toonieglobal.com`                                         |
-| `ENVIRONMENT_API_URL`      | `https://api.toonieglobal.com`                                          |
-| `CHECKOUT_APP_URL`         | `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`            |
-| `ENVIRONMENT_CLIENT_ID`    | `paywithtoonie-ext-client` or assigned by your integration manager      |
-| `ENVIRONMENT_CLIENT_SECRET`| Optional or assigned by your integration manager      |
+| Environment Variable        | Value                                                              |
+|-----------------------------|--------------------------------------------------------------------|
+| `ENVIRONMENT_AUTH_URL`      | `https://auth.toonieglobal.com`                                    |
+| `ENVIRONMENT_API_URL`       | `https://api.toonieglobal.com`                                     |
+| `CHECKOUT_APP_URL`          | `https://pay.toonieglobal.com/?orderId={PAYMENT_SESSION_ID}`       |
+| `ENVIRONMENT_CLIENT_ID`     | `paywithtoonie-ext-client` or assigned by your integration manager |
+| `ENVIRONMENT_CLIENT_SECRET` | Optional or assigned by your integration manager                   |
 
 
 ## QA section
@@ -334,10 +334,10 @@ const listPaymentSessions = async () => {
 ```
 This returns a list of all the payment sessions created by your merchant account, where you can filter and define the order to show them.
 
-| Parameter                | Description                                                                                              |
-|--------------------------|----------------------------------------------------------------------------------------------------------|
-| `status`                 | Optional filter to list only sessions matching a specific status (e.g., `INITIATED`, `SUCCEEDED`, `CREATED`). |
-| `page`                   | Page index for pagination (e.g., `0`, `1`, `2`, ...).                                                    |
-| `size`                   | Number of results per page.                                                                             |
-| `order`                  | Field name used for sorting results (e.g., `creationDate`, `status`, `amount`).                         |
-| `orderType`              | Sorting direction: must be one of `asc` (default) or `desc`.                                            |
+| Parameter   | Description                                                                                                   |
+|-------------|---------------------------------------------------------------------------------------------------------------|
+| `status`    | Optional filter to list only sessions matching a specific status (e.g., `INITIATED`, `SUCCEEDED`, `CREATED`). |
+| `page`      | Page index for pagination (e.g., `0`, `1`, `2`, ...).                                                         |
+| `size`      | Number of results per page.                                                                                   |
+| `order`     | Field name used for sorting results (e.g., `creationDate`, `status`, `amount`).                               |
+| `orderType` | Sorting direction: must be one of `asc` (default) or `desc`.                                                  |
