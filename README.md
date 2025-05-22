@@ -153,10 +153,10 @@ To complete the initialization of a new payment session you need to call the end
 
 You also need to pass a success and an error url parameters where the user will be sent after the payment.
 
->You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your URLs or query string: it will be replaced with the right value by our systems.
+
+> You can use the `{PAYMENT_SESSION_ID}` placeholder anywhere in your URLs or query string: it will be replaced with the right value by our systems.
 >
-> e.g. `https://myecommerce.com/payments/{PAYMENT_SESSION_ID}/ok` will be translated to
-`https://myecommerce.com/payments/ABCDEFG/ok`
+> e.g. `https://myecommerce.com/payments/{PAYMENT_SESSION_ID}/ok` will be translated to `https://myecommerce.com/payments/ABCDEFG/ok`
 
 
 ```js
@@ -249,7 +249,6 @@ const getPaymentSession = async (sessionId) => {
   };
 };
 ```
-
 At the payment session you can check the status of the payment, the amount, the currency and the reason.
 
 Check the status, if the status is `COMPLETED` you can consider the payment as successful.
